@@ -14,6 +14,21 @@ interface Market {
   current_price: string;
   expiration_date: string;
   market_status: string;
+  // Model and bankroll guidance attached by /api/markets.
+  bet_buddy: {
+    fair_prob_yes: number;
+    market_prob_yes: number;
+    edge_yes: number;
+    edge_no: number;
+    confidence: number;
+    recommendation: 'LEAN_YES' | 'LEAN_NO' | 'PASS';
+    suggestions: Array<{
+      side: 'YES' | 'NO';
+      recommended_fraction: number;
+      recommended_position_value: number;
+      recommended_quantity: number;
+    }>;
+  };
 }
 
 interface ModalState {
@@ -76,6 +91,11 @@ export default function MarketsPage() {
     closeModal();
   }
 
+  // Returns the sizing suggestion for the currently selected modal side.
+  const selectedSuggestion = modal
+    ? modal.market.bet_buddy.suggestions.find((s) => s.side === modal.side)
+    : null;
+
   return (
     <>
       <Navbar />
@@ -85,7 +105,7 @@ export default function MarketsPage() {
         <table style={tableStyle}>
           <thead>
             <tr>
-              {['Title', 'Description', 'Price', 'Expiry', ''].map((h) => (
+              {['Title', 'Description', 'Price', 'Buddy', 'Expiry', ''].map((h) => (
                 <th key={h} style={thStyle}>{h}</th>
               ))}
             </tr>
@@ -96,6 +116,17 @@ export default function MarketsPage() {
                 <td style={tdStyle}>{m.title}</td>
                 <td style={{ ...tdStyle, color: 'var(--muted)', maxWidth: '280px' }}>{m.description}</td>
                 <td style={{ ...tdStyle, color: 'var(--accent)' }}>{Number(m.current_price).toFixed(4)}</td>
+                <td style={{ ...tdStyle, minWidth: '180px' }}>
+                  <div style={{ fontSize: '0.7rem', color: buddyColor(m.bet_buddy.recommendation), fontWeight: 700 }}>
+                    {m.bet_buddy.recommendation}
+                  </div>
+                  <div style={{ fontSize: '0.68rem', color: 'var(--muted)', marginTop: '0.2rem' }}>
+                    Edge(YES): {(m.bet_buddy.edge_yes * 100).toFixed(2)}%
+                  </div>
+                  <div style={{ fontSize: '0.68rem', color: 'var(--muted)' }}>
+                    Conf: {(m.bet_buddy.confidence * 100).toFixed(0)}%
+                  </div>
+                </td>
                 <td style={{ ...tdStyle, color: 'var(--muted)' }}>{new Date(m.expiration_date).toLocaleDateString()}</td>
                 <td style={{ ...tdStyle, display: 'flex', gap: '0.5rem' }}>
                   <ActionBtn color="var(--green)" onClick={() => openModal(m, 'YES')}>YES</ActionBtn>
@@ -115,6 +146,26 @@ export default function MarketsPage() {
                 <strong>{Number(modal.market.current_price).toFixed(4)}</strong>
               </p>
 
+              <div style={{ ...hintCardStyle, marginBottom: '0.85rem' }}>
+                <div style={{ fontSize: '0.68rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                  Bet Buddy
+                </div>
+                <div style={{ marginTop: '0.25rem', fontSize: '0.76rem', color: buddyColor(modal.market.bet_buddy.recommendation), fontWeight: 700 }}>
+                  {modal.market.bet_buddy.recommendation}
+                </div>
+                <div style={{ marginTop: '0.2rem', fontSize: '0.72rem', color: 'var(--muted)' }}>
+                  Fair YES: {(modal.market.bet_buddy.fair_prob_yes * 100).toFixed(2)}% | Market YES: {(modal.market.bet_buddy.market_prob_yes * 100).toFixed(2)}%
+                </div>
+                <div style={{ marginTop: '0.2rem', fontSize: '0.72rem', color: 'var(--muted)' }}>
+                  Edge({modal.side}): {(((modal.side === 'YES' ? modal.market.bet_buddy.edge_yes : modal.market.bet_buddy.edge_no)) * 100).toFixed(2)}% | Confidence: {(modal.market.bet_buddy.confidence * 100).toFixed(0)}%
+                </div>
+                {selectedSuggestion && (
+                  <div style={{ marginTop: '0.35rem', fontSize: '0.72rem', color: 'var(--muted)' }}>
+                    Suggested: ${selectedSuggestion.recommended_position_value.toFixed(2)} ({(selectedSuggestion.recommended_fraction * 100).toFixed(2)}%) ≈ qty {selectedSuggestion.recommended_quantity.toFixed(4)}
+                  </div>
+                )}
+              </div>
+
               <label style={labelStyle}>Quantity</label>
               <input
                 type="number"
@@ -125,6 +176,15 @@ export default function MarketsPage() {
                 style={inputStyle}
                 autoFocus
               />
+              {selectedSuggestion && (
+                <button
+                  type="button"
+                  onClick={() => setQuantity(String(selectedSuggestion.recommended_quantity))}
+                  style={{ ...quickFillBtnStyle, marginTop: '0.55rem' }}
+                >
+                  Use Suggested Quantity
+                </button>
+              )}
               {quantity && Number(quantity) > 0 && (
                 <p style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: '0.4rem' }}>
                   Position value: ${(Number(quantity) * Number(modal.market.current_price)).toFixed(2)}
@@ -181,3 +241,11 @@ const inputStyle: React.CSSProperties = { width: '100%', background: 'var(--bg)'
 const btnBase: React.CSSProperties = { padding: '0.55rem 1rem', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '0.78rem', fontFamily: 'monospace', letterSpacing: '0.06em', fontWeight: 600 };
 const overlayStyle: React.CSSProperties = { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200 };
 const modalStyle: React.CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '8px', padding: '2rem', width: '380px', maxWidth: '90vw' };
+const hintCardStyle: React.CSSProperties = { border: '1px solid var(--border)', borderRadius: '6px', padding: '0.6rem 0.7rem', background: 'rgba(255,255,255,0.01)' };
+const quickFillBtnStyle: React.CSSProperties = { background: 'none', border: '1px solid var(--border)', color: 'var(--text)', borderRadius: '4px', padding: '0.35rem 0.55rem', fontSize: '0.68rem', cursor: 'pointer', fontFamily: 'monospace' };
+
+function buddyColor(recommendation: 'LEAN_YES' | 'LEAN_NO' | 'PASS') {
+  if (recommendation === 'LEAN_YES') return 'var(--green)';
+  if (recommendation === 'LEAN_NO') return 'var(--red)';
+  return 'var(--muted)';
+}
