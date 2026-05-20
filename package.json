@@ -9,6 +9,7 @@
     "start": "next start",
     "lint": "next lint",
     "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "db:seed": "tsx db/seed.ts"
   },
@@ -19,17 +20,18 @@
     "dotenv": "^17.3.1",
     "drizzle-orm": "^0.45.1",
     "gsap": "^3.12.5",
-    "jsonwebtoken": "^9.0.2",
+    "jose": "^5.9.6",
     "next": "^15.0.0",
     "react": "^19.0.0",
     "react-chartjs-2": "^5.2.0",
     "react-dom": "^19.0.0",
+    "ws": "^8.18.0",
     "zod": "^3.23.8"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
-    "@types/jsonwebtoken": "^9.0.6",
     "@types/node": "^20.0.0",
+    "@types/ws": "^8.5.13",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "autoprefixer": "^10.4.19",

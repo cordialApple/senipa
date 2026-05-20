@@ -8,7 +8,7 @@ export async function requireAuth(request: NextRequest): Promise<JwtPayload | Ne
   }
   const token = authHeader.slice(7);
   try {
-    return verifyToken(token);
+    return await verifyToken(token);
   } catch {
     return NextResponse.json({ error: 'Invalid or expired token' }, { status: 401 });
   }

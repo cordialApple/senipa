@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
       return user;
     });
 
-    const token = signToken({ userId: result.id, email: result.email, role: result.role });
+    const token = await signToken({ userId: result.id, email: result.email, role: result.role });
     return NextResponse.json({ token }, { status: 201 });
   } catch (err: unknown) {
     // Unique violation → duplicate email

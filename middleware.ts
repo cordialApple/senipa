@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from '@/lib/jwt';
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   const isProtected =
@@ -22,7 +22,7 @@ export function middleware(request: NextRequest) {
   }
 
   try {
-    const payload = verifyToken(token);
+    const payload = await verifyToken(token);
 
     // ADMIN-only section
     if (pathname.startsWith('/admin') && payload.role !== 'ADMIN') {

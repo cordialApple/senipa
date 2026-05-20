@@ -30,6 +30,7 @@ export default function LoginPage() {
         setError(data.error ?? 'Login failed');
         return;
       }
+      localStorage.setItem('token', data.token);
       document.cookie = `token=${data.token}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Strict`;
       router.push('/dashboard');
     } catch {
@@ -54,6 +55,7 @@ export default function LoginPage() {
         setAdminError(data.error ?? 'Login failed');
         return;
       }
+      localStorage.setItem('token', data.token);
       document.cookie = `token=${data.token}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Strict`;
       router.push('/admin');
     } catch {

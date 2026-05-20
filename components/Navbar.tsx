@@ -22,6 +22,7 @@ export default function Navbar() {
 
   function logout() {
     localStorage.removeItem('token');
+    document.cookie = 'token=; path=/; max-age=0; SameSite=Strict';
     router.push('/login');
   }
 
